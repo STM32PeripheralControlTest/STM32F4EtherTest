@@ -17,3 +17,8 @@
   LWIPで, ip_addr構造体から, ドット区切りのデータを得る方法
   inet_ntoa関数を使用すると, 文字列が得られる. 
 
+  LWIPでクライアントからデータを読む際, デフォルトではソケットがブロッキング動作をするので, ノンブロッキングに指定する. 
+    int val = lwip_fcntl(clientfd, F_GETFL, 0);
+    lwip_fcntl(clientfd, F_SETFL, val | O_NONBLOCK);
+  のようにする。
+
