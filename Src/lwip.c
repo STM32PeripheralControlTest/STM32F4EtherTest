@@ -56,19 +56,12 @@
 #endif /* MDK ARM Compiler */
 
 /* USER CODE BEGIN 0 */
-static void testFunc(struct netif* netIF);
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 /* ETH Variables initialization ----------------------------------------------*/
 void _Error_Handler(char * file, int line);
 
 /* USER CODE BEGIN 1 */
-void testFunc(struct netif* netIF)
-{
-  volatile int i = 0;
-
-  i++;
-}
 /* USER CODE END 1 */
 
 /* Variables Initialization */
@@ -78,9 +71,9 @@ ip4_addr_t netmask;
 ip4_addr_t gw;
 
 /* USER CODE BEGIN 2 */
-struct netif GetNetIF()
+void SetNetIfStatusCallback(netif_status_callback_fn callback)
 {
-  return gnetif;
+  netif_set_status_callback(&gnetif, callback);
 }
 /* USER CODE END 2 */
 
@@ -118,8 +111,6 @@ void MX_LWIP_Init(void)
   dhcp_start(&gnetif);
 
 /* USER CODE BEGIN 3 */
-
-  netif_set_status_callback(&gnetif, testFunc);
 /* USER CODE END 3 */
 }
 

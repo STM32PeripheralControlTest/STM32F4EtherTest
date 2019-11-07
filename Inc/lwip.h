@@ -70,7 +70,7 @@
 #endif /* WITH_RTOS */
 
 /* USER CODE BEGIN 0 */
-struct netif GetNetIF();
+void SetNetIfStatusCallback(netif_status_callback_fn callback);
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/

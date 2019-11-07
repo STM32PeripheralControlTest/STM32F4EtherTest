@@ -58,6 +58,7 @@
 /* USER CODE BEGIN Includes */     
 #include "lwip/sockets.h"
 #include "lwip.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,13 +79,16 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 osThreadId startSocketServerTaskHandle;
-int isInitializedFinished = 0;
+volatile int isInitializedFinished = 0;
+volatile int isIPSuppliedByDHCP = 0;
+volatile struct netif currentNetIf;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void startSocketServerTask(const void* argument);
+static void startSocketServerTask(const void* argument);
+static void netifStatusCallback(struct netif* netIf);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -122,7 +126,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   osThreadDef(socketTask, startSocketServerTask, osPriorityNormal, 0, 512);
-    startSocketServerTaskHandle = osThreadCreate(osThread(socketTask), NULL);
+  startSocketServerTaskHandle = osThreadCreate(osThread(socketTask), NULL);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -155,10 +159,25 @@ void StartDefaultTask(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void netifStatusCallback(struct netif* netIf)
+{
+  isIPSuppliedByDHCP = 1;
+  currentNetIf = *netIf;
+}
 void startSocketServerTask(const void* argument)
 {
-
   while(isInitializedFinished == 0);
+
+  
+  SetNetIfStatusCallback(netifStatusCallback);
+
+
+  while(isIPSuppliedByDHCP == 0);
+
+  volatile ip4_addr_t gotIPAddr = currentNetIf.ip_addr;
+
+  volatile char testChar[30];
+  strcpy(testChar, inet_ntoa(gotIPAddr));
 
   int sockfd = lwip_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -189,10 +208,6 @@ void startSocketServerTask(const void* argument)
   while(1){
     volatile int result = 0;
 
-    volatile struct netif netIF2 = GetNetIF();
-
-
-
     if(result < 10){
       result++;
     }
@@ -201,12 +216,6 @@ void startSocketServerTask(const void* argument)
     }
 
   }
-}
-void NetifStatusCallback(struct netif* pNetif)
-{
-  volatile int i = 0;
-
-  i++;
 }
 
 /* USER CODE END Application */
