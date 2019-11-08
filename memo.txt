@@ -1,0 +1,24 @@
+2019/11/07
+  STM32CubeMXでLAN8720でのEthernet接続に必要な処理
+  LAN8720のプロファイルがCubeMXには登録されていないので, 登録が必要. 手順は以下.
+    1. Configurationの, Etherに入り, Parameter Settingsタブで, PHY Addressを1にする. 
+    2. Advanced Parametersタブで, PHYを user PHYにセットする
+    3. PHY nameに適当な値を入れる(LAN8720A推奨)
+    4. PHY special control/status register Offsetに0x1Fをセットする
+    5. PHY Speed maskに0x0004をセットする
+    6. PHY Duplex maskに0x0010をセットする
+
+  LWIPで, DHCPから振られたアドレスを得るのに必要な処理
+  Statusの変化をコールバックでとらえる必要があるらしい. 手順は以下.
+    1. CubeMXの, Configurationの, LWIPに入り, Key Optionsタブで, Network Interfaces Optionsの中の, LWIP_NETIF_STATUS_CALLBACK(Callback Function on Interface Status Changes)をEnabledにする. 
+    2. ソースコードの中の, Src/lwip.cファイル内で宣言されている, gnetifを使用し, netif_set_status_callback関数を用い, コールバックを登録する. 
+    3. DHCPからアドレスがもらえる, または変化すると, コールバック関数が呼ばれ, この関数の引数である, netif構造体のメンバの, ip_addr構造体が, DHCPアドレスを反映したものになっている. 
+
+  LWIPで, ip_addr構造体から, ドット区切りのデータを得る方法
+  inet_ntoa関数を使用すると, 文字列が得られる. 
+
+  LWIPでクライアントからデータを読む際, デフォルトではソケットがブロッキング動作をするので, ノンブロッキングに指定する. 
+    int val = lwip_fcntl(clientfd, F_GETFL, 0);
+    lwip_fcntl(clientfd, F_SETFL, val | O_NONBLOCK);
+  のようにする。
+

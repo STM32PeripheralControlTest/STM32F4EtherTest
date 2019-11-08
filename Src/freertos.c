@@ -58,6 +58,7 @@
 /* USER CODE BEGIN Includes */     
 #include "lwip/sockets.h"
 #include "lwip.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,13 +79,16 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 osThreadId startSocketServerTaskHandle;
-int isInitializedFinished = 0;
+volatile int isInitializedFinished = 0;
+volatile int isIPSuppliedByDHCP = 0;
+volatile struct netif currentNetIf;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void startSocketServerTask(const void* argument);
+static void startSocketServerTask(const void* argument);
+static void netifStatusCallback(struct netif* netIf);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -122,7 +126,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   osThreadDef(socketTask, startSocketServerTask, osPriorityNormal, 0, 512);
-    startSocketServerTaskHandle = osThreadCreate(osThread(socketTask), NULL);
+  startSocketServerTaskHandle = osThreadCreate(osThread(socketTask), NULL);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -155,18 +159,32 @@ void StartDefaultTask(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void netifStatusCallback(struct netif* netIf)
+{
+  isIPSuppliedByDHCP = 1;
+  currentNetIf = *netIf;
+}
 void startSocketServerTask(const void* argument)
 {
-
   while(isInitializedFinished == 0);
+  
+  SetNetIfStatusCallback(netifStatusCallback);
+
+  while(isIPSuppliedByDHCP == 0);
+
+  volatile ip4_addr_t gotIPAddr = currentNetIf.ip_addr;
+
+  volatile char testChar[30];
+  strcpy(testChar, inet_ntoa(gotIPAddr));
 
   int sockfd = lwip_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+  
 
   struct sockaddr_in reader_addr;
   memset(&reader_addr, 0, sizeof(reader_addr));
   reader_addr.sin_family = AF_INET;
   reader_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  // reader_addr.sin_addr.s_addr = htonl("163.50.137.48");
   reader_addr.sin_port = htons(80);
 
   volatile int status = bind(sockfd, (struct sockaddr*)&reader_addr, sizeof(reader_addr));
@@ -178,35 +196,53 @@ void startSocketServerTask(const void* argument)
   struct sockaddr_in client_addr;
   int client_addr_len;
   int clientfd = 0;
-  
-
-  if(status >= 0){
-    clientfd = accept(sockfd, &client_addr, &client_addr_len);
-  }
-
-  
-
   while(1){
-    volatile int result = 0;
-
-    volatile struct netif netIF2 = GetNetIF();
-
-
-
-    if(result < 10){
-      result++;
-    }
-    else{
-      result = 0;
+    if(status >= 0){
+      clientfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_len);
     }
 
+
+    char receiveBuffer[1024] = {0};
+    volatile int n = 0;
+    if(clientfd >= 0){
+      int val = lwip_fcntl(clientfd, F_GETFL, 0);
+      lwip_fcntl(clientfd, F_SETFL, val | O_NONBLOCK);
+
+      char buf;
+      while(1){
+
+        int readbyte = lwip_read(clientfd, &buf, 1);
+
+        if(readbyte <= 0){
+          break;
+        }
+        
+        sprintf(receiveBuffer, "%s%c", receiveBuffer, buf);
+        n++;
+        if(n >= 1024){
+          break;
+        }
+        else if(n >= 259){
+          int x = 0;
+          x++;
+        }
+      }
+    }
+    char buffer[] = "HTTP/1.1 200 OK\r\n"
+			"Date: Sun, 26 Feb 2017 15:13:00 GMT\r\n"
+			"Server: Apache/2.2.31 (Amazon)\r\n"
+			"Last-Modified: Sun, 26 Feb 2017 15:06:20 GMT\r\n"
+			"Accept-Ranges: bytes\r\n"
+			"Content-Length: 6\r\n"
+			"Connection: close\r\n"
+			"Content-Type: text/html; charset=UTF-8\r\n"
+			"\r\n"
+			"HELLO\r\n";
+    
+    lwip_send(clientfd, buffer, strlen(buffer), 0);
+
+    close(clientfd);
   }
-}
-void NetifStatusCallback(struct netif* pNetif)
-{
-  volatile int i = 0;
-
-  i++;
 }
 
 /* USER CODE END Application */
