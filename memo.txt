@@ -22,3 +22,7 @@
     lwip_fcntl(clientfd, F_SETFL, val | O_NONBLOCK);
   のようにする。
 
+2019/11/09
+  STM32F4Discoveryに搭載されているSTLinkはST-LinkV2というバージョンらしい.
+  コンフィグファイルをこれに指定しないとデバッグ開始できない
+
