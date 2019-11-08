@@ -7,7 +7,22 @@
         {
             "cwd": "${workspaceRoot}",
             "executable": "./build/${workspaceRootFolderName}.elf",
-            "name": "Debug Microcontroller",
+            "name": "Debug STM32F4Discovery",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "stlink-v2.cfg",
+                "stm32f4x.cfg"
+            ],
+            "runToMain": true,
+            "preLaunchTask": "build all"
+            
+        },
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/${workspaceRootFolderName}.elf",
+            "name": "Debug MCU PLF",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
@@ -19,5 +34,6 @@
             "preLaunchTask": "build all"
             
         }
+
     ]
 }
