@@ -71,6 +71,7 @@
 
 /* USER CODE BEGIN 0 */
 void SetNetIfStatusCallback(netif_status_callback_fn callback);
+void SetNetIfLinkCallback(netif_status_callback_fn callback);
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/

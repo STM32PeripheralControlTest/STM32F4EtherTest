@@ -82,6 +82,7 @@ osThreadId startSocketServerTaskHandle;
 volatile int isInitializedFinished = 0;
 volatile int isIPSuppliedByDHCP = 0;
 volatile struct netif currentNetIf;
+volatile int isLinkUp = 0;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -89,6 +90,7 @@ osThreadId defaultTaskHandle;
 /* USER CODE BEGIN FunctionPrototypes */
 static void startSocketServerTask(const void* argument);
 static void netifStatusCallback(struct netif* netIf);
+static void netifLinkCallback(struct netif* netIf);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -164,11 +166,24 @@ void netifStatusCallback(struct netif* netIf)
   isIPSuppliedByDHCP = 1;
   currentNetIf = *netIf;
 }
+void netifLinkCallback(struct netif* netIf)
+{
+  if((netIf->flags & NETIF_FLAG_LINK_UP) != 0){
+    isLinkUp = 1;
+  }else{
+    isLinkUp = 0;
+  }
+  currentNetIf = *netIf;
+  
+}
 void startSocketServerTask(const void* argument)
 {
   while(isInitializedFinished == 0);
   
   SetNetIfStatusCallback(netifStatusCallback);
+
+  SetNetIfLinkCallback(netifLinkCallback);
+  
 
   while(isIPSuppliedByDHCP == 0);
 
