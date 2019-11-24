@@ -60,6 +60,29 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define LCD_DATA6_Pin GPIO_PIN_5
+#define LCD_DATA6_GPIO_Port GPIOE
+#define LCD_DATA7_Pin GPIO_PIN_6
+#define LCD_DATA7_GPIO_Port GPIOE
+#define LCD_RS_Pin GPIO_PIN_13
+#define LCD_RS_GPIO_Port GPIOC
+#define LCD_DATA1_Pin GPIO_PIN_0
+#define LCD_DATA1_GPIO_Port GPIOC
+#define LCD_DATA0_Pin GPIO_PIN_6
+#define LCD_DATA0_GPIO_Port GPIOA
+#define LCD_RW_Pin GPIO_PIN_7
+#define LCD_RW_GPIO_Port GPIOE
+#define LCD_E_Pin GPIO_PIN_8
+#define LCD_E_GPIO_Port GPIOE
+#define LCD_DATA5_Pin GPIO_PIN_9
+#define LCD_DATA5_GPIO_Port GPIOE
+#define LCD_DATA4_Pin GPIO_PIN_10
+#define LCD_DATA4_GPIO_Port GPIOE
+#define LCD_DATA3_Pin GPIO_PIN_11
+#define LCD_DATA3_GPIO_Port GPIOE
+#define LCD_DATA2_Pin GPIO_PIN_12
+#define LCD_DATA2_GPIO_Port GPIOE
+
 /* ########################## Assert Selection ############################## */
 /**
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 
