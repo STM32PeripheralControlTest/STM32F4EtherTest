@@ -127,7 +127,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  osThreadDef(socketTask, startSocketServerTask, osPriorityNormal, 0, 512);
+  osThreadDef(socketTask, startSocketServerTask, osPriorityNormal, 0, 1024);
   startSocketServerTaskHandle = osThreadCreate(osThread(socketTask), NULL);
 
   /* USER CODE END RTOS_THREADS */
@@ -205,7 +205,7 @@ void startSocketServerTask(const void* argument)
   volatile int status = bind(sockfd, (struct sockaddr*)&reader_addr, sizeof(reader_addr));
 
   if(status >= 0){
-    status = listen(sockfd, 5);
+    status = listen(sockfd, 1);
   }
 
   struct sockaddr_in client_addr;
@@ -220,43 +220,68 @@ void startSocketServerTask(const void* argument)
     char receiveBuffer[1024] = {0};
     volatile int n = 0;
     if(clientfd >= 0){
-      int val = lwip_fcntl(clientfd, F_GETFL, 0);
-      lwip_fcntl(clientfd, F_SETFL, val | O_NONBLOCK);
+       int val = lwip_fcntl(clientfd, F_GETFL, 0);
+       lwip_fcntl(clientfd, F_SETFL, val | O_NONBLOCK);
 
-      char buf;
-      while(1){
+      // n = lwip_read(clientfd, receiveBuffer, sizeof(receiveBuffer));
+      int isclientConnected = 1;
+      while(isclientConnected != 0){
+        int readByte = lwip_read(clientfd, receiveBuffer, sizeof(receiveBuffer));
 
-        int readbyte = lwip_read(clientfd, &buf, 1);
+        if(readByte > 0){
+          n += readByte;
+        }else if(readByte == 0){
+          isclientConnected = 0;
+          close(clientfd);
+        }else if(n > 0){
+            char buffer[] = "HTTP/1.1 200 OK\r\n"
+    	      	"Date: Sun, 26 Feb 2017 15:13:00 GMT\r\n"
+    	      	"Server: Apache/2.2.31 (Amazon)\r\n"
+    	      	"Last-Modified: Sun, 26 Feb 2017 15:06:20 GMT\r\n"
+    	      	"Accept-Ranges: bytes\r\n"
+    	      	"Content-Length: 7\r\n"
+    	      	"Connection: close\r\n"
+    	      	"Content-Type: text/html; charset=UTF-8\r\n"
+    	      	"\r\n"
+    	      	"HELLO\r\n";
 
-        if(readbyte <= 0){
-          break;
-        }
-        
-        sprintf(receiveBuffer, "%s%c", receiveBuffer, buf);
-        n++;
-        if(n >= 1024){
-          break;
-        }
-        else if(n >= 259){
-          int x = 0;
-          x++;
+            lwip_send(clientfd, buffer, strlen(buffer), 0);
+
+            n = 0;
+
+            close(clientfd);
+            isclientConnected = 0;
         }
       }
-    }
-    char buffer[] = "HTTP/1.1 200 OK\r\n"
-			"Date: Sun, 26 Feb 2017 15:13:00 GMT\r\n"
-			"Server: Apache/2.2.31 (Amazon)\r\n"
-			"Last-Modified: Sun, 26 Feb 2017 15:06:20 GMT\r\n"
-			"Accept-Ranges: bytes\r\n"
-			"Content-Length: 6\r\n"
-			"Connection: close\r\n"
-			"Content-Type: text/html; charset=UTF-8\r\n"
-			"\r\n"
-			"HELLO\r\n";
-    
-    lwip_send(clientfd, buffer, strlen(buffer), 0);
 
-    close(clientfd);
+
+      // char buf;
+      // while(1){
+
+      //   int readbyte = lwip_read(clientfd, &buf, 1);
+      //   // int readbyte = lwip_recv(clientfd, &buf, 1, 0);
+
+      //   if(readbyte <= 0){
+      //     break;
+      //   }
+        
+      //   if(readbyte > 0){
+      //     sprintf(receiveBuffer, "%s%c", receiveBuffer, buf);
+      //     n++;
+      //     if(n >= 1024){
+      //       break;
+      //     }
+      //     else if(n >= 259){
+      //       int x = 0;
+      //       x++;
+      //     }
+      //   }
+      // }
+      
+
+    }
+    
+    //close(clientfd);
   }
 }
 
